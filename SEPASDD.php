@@ -669,7 +669,7 @@ class SEPASDD
     }//validateEndToEndId
 
     /**
-     * Validate a BIC number.Payment Information
+     * Validate a BIC number.
      *
      * @param $BIC the BIC number to check.
      *
@@ -817,7 +817,7 @@ class SEPASDD
     }//calcTotalAmount
 
     /**
-     * Create a random Message Id f$PmtInfNodeor the header, prefixed with a timestamp.
+     * Create a random Message Id $PmtInfNode for the header, prefixed with a timestamp.
      *
      * @return the Message Id.
      */
@@ -869,7 +869,7 @@ class SEPASDD
     /**
      * Function to create a batch (PmtInf with BtchBookg set true) element.
      *
-     * @param $type The DirectDebit type for this batch.
+     * @param $type The Direct Debit type for this batch.
      * @param $date The required collection date.
      */
     private function getBatch($type, $date)
