@@ -715,10 +715,9 @@ class SEPASDD
      */
     public static function validateMandateDate($date)
     {
-        $result = DateTime::createFromFormat("Y-m-d", $date);
-
-        if ($result === false) {
-            return $date . " is not a valid ISO Date";
+        $result = validateDate($date);
+        if ($result !== false) {
+            return $result;
         }
 
         $timeStamp = $result->getTimestamp();
