@@ -104,6 +104,11 @@ class SEPASCT
         $CtrlSumNode = $this->xml->createElement("CtrlSum");
         $InitgPtyNode = $this->xml->createElement("InitgPty");
         $NmNode = $this->xml->createElement("Nm");
+        $IdNode = $this->xml->createElement("Id");
+        $OrgIdNode = $this->xml->createElement("OrgId");
+        $OthrNode = $this->xml->createElement("Othr");
+        $Id_Othr_Node = $this->xml->createElement("Id");
+
 
         //Set the values for the nodes
         $MsgIdNode->nodeValue = $this->makeMsgId();
@@ -116,9 +121,15 @@ class SEPASCT
             $NmNode->nodeValue = htmlentities($this->config['name'], ENT_QUOTES, 'UTF-8');
         }
 
+        $Id_Othr_Node->nodeValue = $this->config['debitor_id'];
 
         //Append the nodes
+        $OthrNode->appendChild($Id_Othr_Node);
+        $OrgIdNode->appendChild($OthrNode);
+        $IdNode->appendChild($OrgIdNode);
+
         $InitgPtyNode->appendChild($NmNode);
+        $InitgPtyNode->appendChild($IdNode);
         $GrpHdrNode->appendChild($MsgIdNode);
         $GrpHdrNode->appendChild($CreDtTmNode);
         $GrpHdrNode->appendChild($NbOfTxsNode);
@@ -175,7 +186,7 @@ class SEPASCT
             $FinInstnId_DbtrAgt_Node = $this->xml->createElement("FinInstnId");
             if (isset($this->config['BIC'])) {
                 if (isset($this->config['version']) && $this->config['version'] == "3") {
-                    $BIC_DbtrAgt_Node = $this->xml->createElement("BICFI");
+                    $BIC_DbtrAgt_Node = $this->xml->createElement("BIC");
                 } else {
                     $BIC_DbtrAgt_Node = $this->xml->createElement("BIC");
                 }
@@ -203,7 +214,7 @@ class SEPASCT
             //$InstrPrty->nodeValue = 'NORM': //TODO: També pot ser HIGH
             $Cd_SvcLvl_Node->nodeValue = "SEPA";
             $Cd_LclInstrm_Node->nodeValue = "CORE"; //TODO: no tinc clar quins codis hi ha disponibles.
-            $Cd_CtgyPurp_Node->nodeValue = 'SALA'; //TODO: Valor alternatiu PENS. Ni idea que volen dir.
+            $Cd_CtgyPurp_Node->nodeValue = 'SALA'; //TODO: Valor alternatiu PENS.
             //$SeqTpNode->nodeValue = $payment['type']; //Define a check for: FRST RCUR OOFF FNAL
             $ReqdExctnDtNode->nodeValue = $payment['execution_date'];
 
@@ -219,7 +230,7 @@ class SEPASCT
             } else {
                 $Id_Othr_DbtrAgt_Node->nodeValue = "NOTPROVIDED";
             }
-            $ChrgBrNode->nodeValue = "SLEV"; //TODO: Possibles valors són SLEV, CRED, DEBT, SHAR
+            $ChrgBrNode->nodeValue = "SHAR"; //TODO: Possibles valors són SLEV, CRED, DEBT, SHAR
 
             /*
             if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
@@ -254,7 +265,7 @@ class SEPASCT
             $FinInstnId_CdtrAgt_Node = $this->xml->createElement("FinInstnId");
 
             if (isset($this->config['version']) && $this->config['version'] == "3") {
-                $BIC_CdtrAgt_Node = $this->xml->createElement("BICFI");
+                $BIC_CdtrAgt_Node = $this->xml->createElement("BIC");
             } else {
                 $BIC_CdtrAgt_Node = $this->xml->createElement("BIC");
             }
@@ -264,6 +275,8 @@ class SEPASCT
         $CdtrAcctNode = $this->xml->createElement("CdtrAcct");
         $Id_CdtrAcct_Node = $this->xml->createElement("Id");
         $IBAN_CdtrAcct_Node = $this->xml->createElement("IBAN");
+        $PurpNode = $this->xml->createElement("Purp");
+        $Cd_Purp_Node = $this->xml->createElement("Cd");
         $RmtInfNode = $this->xml->createElement("RmtInf");
         $UstrdNode = $this->xml->createElement("Ustrd");
 
@@ -285,6 +298,8 @@ class SEPASCT
         }
 
         $IBAN_CdtrAcct_Node->nodeValue = $payment['IBAN'];
+
+        $Cd_Purp_Node->nodeValue = 'SALA';
 
         if (version_compare(PHP_VERSION, '5.4.0') >= 0) {
             $UstrdNode->nodeValue = htmlentities($payment['description'], ENT_XML1, 'UTF-8');
@@ -367,6 +382,9 @@ class SEPASCT
         $Id_CdtrAcct_Node->appendChild($IBAN_CdtrAcct_Node);
         $CdtrAcctNode->appendChild($Id_CdtrAcct_Node);
         $CdtTrfTxInfNode->appendChild($CdtrAcctNode);
+
+        $PurpNode->appendChild($Cd_Purp_Node);
+        $CdtTrfTxInfNode->appendChild($PurpNode);
 
         $RmtInfNode->appendChild($UstrdNode);
         $CdtTrfTxInfNode->appendChild($RmtInfNode);
@@ -519,7 +537,7 @@ class SEPASCT
             //Check if it is even there in the config
             if (array_key_exists($target, $config)) {
                 //Perform the validation
-                $function_result = call_user_func("SEPASCT::" . $function, $config[$target]);
+                $function_result = call_user_func(array($this,"SEPASCT::" . $function), $config[$target]);
                 if ($function_result) {
                     continue;
                 } else {
@@ -571,7 +589,7 @@ class SEPASCT
             //Check if it is even there in the config
             if (array_key_exists($target, $payment)) {
                 //Perform the RegEx
-                $function_result = call_user_func("SEPASCT::" . $function, $payment[$target]);
+                $function_result = call_user_func(array($this,"SEPASCT::" . $function), $payment[$target]);
                 if ($function_result === true) {
                     continue;
                 } else {
@@ -605,8 +623,7 @@ class SEPASCT
      */
     public static function validateText($text)
     {
-        //$result = preg_match('/[a-zA-Z0-9\/\–\?\:\(\)\.\,\‘\+\s]{0,140}/',$text);
-        $result = preg_match('/[a-zA-Z0-9\/\–\?\:\(\)\.\,\‘\+\s]/',$text);
+        $result = preg_match("/[a-zA-Z0-9\/\–\?\:\(\)\.\,\‘\+\s]{0,140}/",$text);
         if ($result == 0 || $result === false) {
             return false;
         }
@@ -621,9 +638,8 @@ class SEPASCT
      *
      * @return BOOLEAN TRUE if valid, FALSE if invalid.
      */
-    public static function validateIBAN($IBAN)
+    public function validateIBAN($IBAN)
     {
-        return true;
         if (array_key_exists('validate', $this->config) && $this->config['validate'] == false) {
             return true;
         }
@@ -709,11 +725,11 @@ class SEPASCT
             return true;
         }
         $result = preg_match("([a-zA-Z]{4}[a-zA-Z]{2}[a-zA-Z0-9]{2}([a-zA-Z0-9]{3})?)", $BIC);
-        if ($result > 0 && $result !== false) {
-            return true;
-        } else {
+        if ($result == 0 || $result === false) {
             return false;
         }
+        
+        return true;
     }//validateBIC
 
     /**
@@ -916,7 +932,7 @@ class SEPASCT
         if (isset($this->config['BIC'])) {
 
             if (isset($this->config['version']) && $this->config['version'] == "3") {
-                $BIC_DbtrAgt_Node = $this->xml->createElement("BICFI");
+                $BIC_DbtrAgt_Node = $this->xml->createElement("BIC");
             } else {
                 $BIC_DbtrAgt_Node = $this->xml->createElement("BIC");
             }
@@ -1008,16 +1024,16 @@ class SEPASCT
 
         $PmtInfNode->appendChild($ChrgBrNode);
 
-        /*
-        $DbtrSchmeIdNode->appendChild($Nm_DbtrSchmeId_Node);
-        $OthrNode->appendChild($Id_Othr_Node);
-        $SchmeNmNode->appendChild($PrtryNode);
-        $OthrNode->appendChild($SchmeNmNode);
-        $PrvtIdNode->appendChild($OthrNode);
-        $Id_DbtrSchmeId_Node->appendChild($PrvtIdNode);
-        $DbtrSchmeIdNode->appendChild($Id_DbtrSchmeId_Node);
-        $PmtInfNode->appendChild($DbtrSchmeIdNode);
-        */
+        
+        //$DbtrSchmeIdNode->appendChild($Nm_DbtrSchmeId_Node);
+        //$OthrNode->appendChild($Id_Othr_Node);
+        //$SchmeNmNode->appendChild($PrtryNode);
+        //$OthrNode->appendChild($SchmeNmNode);
+        //$PrvtIdNode->appendChild($OthrNode);
+        //$Id_DbtrSchmeId_Node->appendChild($PrvtIdNode);
+        //$DbtrSchmeIdNode->appendChild($Id_DbtrSchmeId_Node);
+        //$PmtInfNode->appendChild($DbtrSchmeIdNode);
+        
 
         //Add it to the batchArray.
         $this->batchArray[$type . "::" . $date]['node'] = $PmtInfNode;
